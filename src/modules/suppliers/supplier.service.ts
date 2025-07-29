@@ -1,3 +1,4 @@
+import { Supplier } from './../../database/mysql/supplier.enitity';
 import {
   BadRequestException,
   Injectable,
@@ -7,8 +8,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
+import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 @Injectable()
 export class SupplierService {
@@ -57,6 +58,64 @@ export class SupplierService {
     } catch (error) {
       console.error('Fetch Supplier Error:', error);
       throw new InternalServerErrorException('Failed to fetch suppliers.');
+    }
+  }
+
+  async getSupplierById(supplier_uuid: string): Promise<Supplier> {
+    try {
+      const supplier = await this.supplierRepository.findOne({
+        where: { supplier_uuid },
+      });
+
+      if (!supplier) {
+        throw new BadRequestException('Supplier not found');
+      }
+
+      return supplier;
+    } catch (error) {
+      console.error('Get Supplier By ID Error:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve supplier');
+    }
+  }
+
+  async updateSupplier(
+    supplier_uuid: string,
+    dto: UpdateSupplierDto,
+  ): Promise<Supplier> {
+    try {
+      const supplier = await this.supplierRepository.findOne({
+        where: { supplier_uuid },
+      });
+
+      if (!supplier) {
+        throw new BadRequestException('Supplier not found');
+      }
+
+      // Check for duplicate name or phone number from OTHER suppliers
+      const existing = await this.supplierRepository.findOne({
+        where: [
+          { supplier_name: dto.supplier_name },
+          { phone_number: dto.phone_number },
+        ],
+      });
+
+      if (existing && existing.supplier_uuid !== supplier_uuid) {
+        throw new BadRequestException(
+          'Another supplier with this name or phone number already exists.',
+        );
+      }
+
+      const updated = Object.assign(supplier, dto);
+      return await this.supplierRepository.save(updated);
+    } catch (error) {
+      console.error('Update Supplier Error:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update supplier.');
     }
   }
 }
