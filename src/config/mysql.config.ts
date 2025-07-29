@@ -1,6 +1,8 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { config } from 'dotenv';
 import { Area } from 'src/database/mysql/area.entity';
+import { Category } from 'src/database/mysql/category.entity';
+import { Item } from 'src/database/mysql/item.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 
 config(); // ✅ Correct function call
@@ -12,6 +14,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [Area,Supplier],
+  entities: [Area, Supplier, Item, Category],
   synchronize: process.env.ENVIRONMENT !== 'prod',
 };
