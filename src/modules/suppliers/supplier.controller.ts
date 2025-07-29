@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { SupplierService } from './supplier.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -64,6 +65,16 @@ export class SupplierController {
       statusCode: HttpStatus.OK,
       message: 'Supplier updated successfully',
       data: supplier,
+    };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  async delete(@Param('id') id: string): Promise<any> {
+    await this.supplierService.deleteSupplier(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Supplier deleted successfully',
     };
   }
 }

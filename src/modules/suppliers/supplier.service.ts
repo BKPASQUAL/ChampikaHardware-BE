@@ -118,4 +118,20 @@ export class SupplierService {
       throw new InternalServerErrorException('Failed to update supplier.');
     }
   }
+
+  async deleteSupplier(supplier_uuid: string): Promise<void> {
+    try {
+      const result = await this.supplierRepository.delete({ supplier_uuid });
+
+      if (result.affected === 0) {
+        throw new BadRequestException('Supplier not found');
+      }
+    } catch (error) {
+      console.error('Delete Supplier Error:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete supplier.');
+    }
+  }
 }
