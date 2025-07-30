@@ -26,7 +26,7 @@ export class CategoryController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getALl(): Promise<any> {
+  async getAll(): Promise<any> {
     const { data, count } = await this.categoryService.getAllCategory();
     return {
       statusCode: HttpStatus.OK,

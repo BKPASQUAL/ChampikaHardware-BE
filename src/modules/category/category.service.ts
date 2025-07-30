@@ -1,7 +1,7 @@
 import {
   Injectable,
-  BadRequestException,
   InternalServerErrorException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -25,7 +25,7 @@ export class CategoryService {
       });
 
       if (existing) {
-        throw new BadRequestException('Category with this UUID already exists');
+        throw new ConflictException('Category with this UUID already exists');
       }
 
       const newCategory = this.categoryRepository.create({

@@ -1,9 +1,10 @@
 import { Supplier } from './../../database/mysql/supplier.enitity';
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   HttpException,
+  ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,7 +29,7 @@ export class SupplierService {
       });
 
       if (existing) {
-        throw new BadRequestException(
+        throw new ConflictException(
           'Supplier with this name or phone number already exists.',
         );
       }
@@ -68,7 +69,7 @@ export class SupplierService {
       });
 
       if (!supplier) {
-        throw new BadRequestException('Supplier not found');
+        throw new NotFoundException('Supplier not found');
       }
 
       return supplier;
@@ -91,7 +92,7 @@ export class SupplierService {
       });
 
       if (!supplier) {
-        throw new BadRequestException('Supplier not found');
+        throw new NotFoundException('Supplier not found');
       }
 
       // Check for duplicate name or phone number from OTHER suppliers
@@ -103,7 +104,7 @@ export class SupplierService {
       });
 
       if (existing && existing.supplier_uuid !== supplier_uuid) {
-        throw new BadRequestException(
+        throw new ConflictException(
           'Another supplier with this name or phone number already exists.',
         );
       }
@@ -124,7 +125,7 @@ export class SupplierService {
       const result = await this.supplierRepository.delete({ supplier_uuid });
 
       if (result.affected === 0) {
-        throw new BadRequestException('Supplier not found');
+        throw new NotFoundException('Supplier not found');
       }
     } catch (error) {
       console.error('Delete Supplier Error:', error);
