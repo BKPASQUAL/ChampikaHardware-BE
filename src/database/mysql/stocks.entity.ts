@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Item } from './item.entity';
 import { Category } from './category.entity';
+import { StockLocation } from './stock_location.entity';
 
 @Entity('stocks')
 export class Stock {
@@ -19,9 +20,9 @@ export class Stock {
   @JoinColumn({ name: 'item_id' })
   item: Item;
 
-  @ManyToOne(() => Category)
-  @JoinColumn({ name: 'category_id' })
-  category: Category;
+  @ManyToOne(() => StockLocation)
+  @JoinColumn({ name: 'location_id' })
+  category: StockLocation;
 
   @Column({ type: 'int' })
   quantity: number;
