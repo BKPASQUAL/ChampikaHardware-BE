@@ -36,7 +36,7 @@ export class ItemService {
       });
 
       if (existing) {
-        throw new ConflictException (
+        throw new ConflictException(
           'Item already exists with same UUID, name, or code',
         );
       }

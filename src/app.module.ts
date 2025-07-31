@@ -4,6 +4,7 @@ import { typeOrmConfig } from './config/mysql.config';
 import { SupplierModule } from './modules/suppliers/supplier.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ItemModule } from './modules/items/item.module';
+import { StockLocationModule } from './modules/location/stockLocation.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { ItemModule } from './modules/items/item.module';
     SupplierModule,
     CategoryModule,
     ItemModule,
+    StockLocationModule
   ],
   controllers: [],
   providers: [],
