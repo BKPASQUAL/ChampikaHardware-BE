@@ -33,9 +33,6 @@ export class Item {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   selling_price: number;
 
-  // @Column({ type: 'int' })
-  // quantity: number;
-
   @Column({ type: 'varchar', length: 50 })
   sku: string;
 

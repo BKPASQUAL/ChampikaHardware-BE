@@ -3,9 +3,10 @@ import { config } from 'dotenv';
 import { Area } from 'src/database/mysql/area.entity';
 import { Category } from 'src/database/mysql/category.entity';
 import { Item } from 'src/database/mysql/item.entity';
+import { Stock } from 'src/database/mysql/stocks.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 
-config(); // ✅ Correct function call
+config();
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'mysql',
@@ -14,6 +15,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [Area, Supplier, Item, Category],
+  entities: [Area, Supplier, Item, Category, Stock],
   synchronize: process.env.ENVIRONMENT !== 'prod',
 };
