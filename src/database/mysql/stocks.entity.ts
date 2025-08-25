@@ -8,7 +8,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Item } from './item.entity';
-import { Category } from './category.entity';
 import { StockLocation } from './stock_location.entity';
 
 @Entity('stocks')
@@ -16,13 +15,19 @@ export class Stock {
   @PrimaryGeneratedColumn()
   stock_id: number;
 
+  @Column()
+  item_id: number;
+
   @ManyToOne(() => Item)
   @JoinColumn({ name: 'item_id' })
   item: Item;
 
+  @Column()
+  location_id: number;
+
   @ManyToOne(() => StockLocation)
   @JoinColumn({ name: 'location_id' })
-  category: StockLocation;
+  location: StockLocation;
 
   @Column({ type: 'int' })
   quantity: number;

@@ -34,16 +34,31 @@ export class SupplierService {
         );
       }
 
+      // ✅ Fix: provide `where: {}`
+      const lastSupplier = await this.supplierRepository.findOne({
+        where: {},
+        order: { supplier_id: 'DESC' },
+      });
+
+      let newCode = 'S0001';
+      if (lastSupplier) {
+        const lastCode = lastSupplier.supplier_code; // e.g. "S0005"
+        const lastNumber = parseInt(lastCode.replace('S', ''), 10);
+        const nextNumber = lastNumber + 1;
+        newCode = `S${nextNumber.toString().padStart(4, '0')}`;
+      }
+
       const supplier = this.supplierRepository.create({
         ...dto,
         supplier_uuid: uuidv4(),
+        supplier_code: newCode,
       });
 
       return await this.supplierRepository.save(supplier);
     } catch (error) {
       console.error('Create Supplier Error:', error);
       if (error instanceof HttpException) {
-        throw error; // propagate known exceptions
+        throw error
       }
       throw new InternalServerErrorException('Failed to create supplier.');
     }

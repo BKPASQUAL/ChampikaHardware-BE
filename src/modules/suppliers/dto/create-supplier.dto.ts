@@ -1,9 +1,24 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  IsInt,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateSupplierDto {
   @IsUUID()
   @IsNotEmpty()
   supplier_uuid: string;
+
+  // supplier_code is not UUID → change validation
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 12)
+  supplier_code: string;
 
   @IsString()
   @IsNotEmpty()
@@ -12,7 +27,7 @@ export class CreateSupplierDto {
 
   @IsString()
   @IsOptional()
-  description?: string;
+  additional_notes?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -24,9 +39,15 @@ export class CreateSupplierDto {
 
   @IsString()
   @IsNotEmpty()
-  representative_name: string;
+  contact_person: string;
 
   @IsString()
-  @IsNotEmpty()
-  representative_contact: string;
+  @IsOptional()
+  email: string;
+
+  @IsInt()
+  @Type(() => Number)
+  @IsOptional()
+  @Min(0) 
+  credit_days?: number;
 }

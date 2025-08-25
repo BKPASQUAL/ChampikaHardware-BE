@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Category } from './category.entity';
 
 @Entity('suppliers')
 export class Supplier {
@@ -14,11 +17,14 @@ export class Supplier {
   @Column({ type: 'varchar', length: 36 })
   supplier_uuid: string;
 
+  @Column({ type: 'varchar', length: 12 })
+  supplier_code: string;
+
   @Column({ type: 'varchar', length: 100 })
   supplier_name: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  additional_notes: string;
 
   @Column({ type: 'varchar', length: 255 })
   address: string;
@@ -27,10 +33,18 @@ export class Supplier {
   phone_number: string;
 
   @Column({ type: 'varchar', length: 100 })
-  representative_name: string;
+  contact_person: string;
 
   @Column({ type: 'varchar', length: 100 })
-  representative_contact: string;
+  email: string;
+
+  @Column({ type: 'int' })
+  credit_days: number;
+
+  // 🔗 Add relation to Category
+  @ManyToOne(() => Category, { eager: true }) // eager loads category automatically
+  @JoinColumn({ name: 'category_id' }) // FK column
+  category: Category;
 
   @CreateDateColumn()
   created_at: Date;
