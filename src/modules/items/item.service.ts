@@ -109,11 +109,18 @@ export class ItemService {
         item_code: savedItem.item_code,
         item_name: savedItem.item_name,
         description: savedItem.description,
+        additional_notes: savedItem.additional_notes,
         cost_price: savedItem.cost_price,
         selling_price: savedItem.selling_price,
+        rep_commision: savedItem.rep_commision,
+        minimum_selling_price: savedItem.minimum_selling_price,
         unit_type: savedItem.unit_type,
+        unit_quantity: savedItem.unit_quantity,
+        supplier_id: supplier.supplier_id,
         supplier_name: supplier.supplier_name,
+        category_id: category.category_id,
         category_name: category.category_name,
+        images: savedItem.images,
       };
     } catch (error) {
       console.error('Error creating item:', error);
@@ -129,6 +136,38 @@ export class ItemService {
       // Handle unknown errors
       throw new InternalServerErrorException(
         'An unexpected error occurred while creating the item',
+      );
+    }
+  }
+
+  async getAllItems(): Promise<ItemResponseDto[]> {
+    try {
+      const items = await this.itemRepository.find({
+        relations: ['supplier', 'category'],
+      });
+
+      return items.map((item) => ({
+        item_uuid: item.item_uuid,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        description: item.description,
+        additional_notes: item.additional_notes,
+        cost_price: item.cost_price,
+        selling_price: item.selling_price,
+        rep_commision: item.rep_commision,
+        minimum_selling_price: item.minimum_selling_price,
+        unit_type: item.unit_type,
+        unit_quantity: item.unit_quantity,
+        supplier_id: item.supplier.supplier_id,
+        supplier_name: item.supplier.supplier_name,
+        category_id: item.category.category_id,
+        category_name: item.category.category_name,
+        images: item.images,
+      }));
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while fetching items',
       );
     }
   }

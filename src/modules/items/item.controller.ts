@@ -1,5 +1,5 @@
 import { Item } from './../../database/mysql/item.entity';
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
 
@@ -7,7 +7,7 @@ import { CreateItemDto } from './dto/create-item.dto';
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
   
-  // Create Supplier
+  // Create Item
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateItemDto): Promise<any> {
@@ -17,6 +17,20 @@ export class ItemController {
       statusCode: HttpStatus.CREATED,
       message: 'Item created successfully',
       data: item,
+    };
+  }
+
+  // Get All Items
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findAll(): Promise<any> {
+    const items = await this.itemService.getAllItems();
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Items retrieved successfully',
+      data: items,
+      count: items.length,
     };
   }
 }
