@@ -1,30 +1,34 @@
 // src/modules/items/dto/create-item.dto.ts
 
 import {
-  IsUUID,
   IsString,
   IsOptional,
   IsNumber,
+  IsEnum,
   IsInt,
   IsNotEmpty,
+  MaxLength,
 } from 'class-validator';
+import { UnitType } from 'src/database/enums/item-type.enum';
 
 export class CreateItemDto {
-  @IsUUID()
-  @IsNotEmpty()
-  item_uuid: string;
-
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   item_code: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   item_name: string;
 
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  additional_notes?: string;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsNotEmpty()
@@ -34,13 +38,21 @@ export class CreateItemDto {
   @IsNotEmpty()
   selling_price: number;
 
-  // @IsInt()
-  // @IsNotEmpty()
-  // quantity: number;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsOptional()
+  rep_commision?: number;
 
-  @IsString()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsOptional()
+  minimum_selling_price?: number;
+
+  @IsEnum(UnitType)
   @IsNotEmpty()
-  sku: string;
+  unit_type: UnitType;
+
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @IsOptional()
+  unit_quantity?: number;
 
   @IsInt()
   @IsNotEmpty()
@@ -49,4 +61,7 @@ export class CreateItemDto {
   @IsInt()
   @IsNotEmpty()
   category_id: number;
+
+  @IsOptional()
+  images?: string[];
 }

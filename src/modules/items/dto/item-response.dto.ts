@@ -5,8 +5,7 @@ export class ItemResponseDto {
   description?: string;
   cost_price: number;
   selling_price: number;
-//   quantity: number;
-  sku: string;
+  unit_type: string; // 👈 Add this property
   supplier_name: string;
   category_name: string;
 }
