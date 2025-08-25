@@ -58,7 +58,7 @@ export class SupplierService {
     } catch (error) {
       console.error('Create Supplier Error:', error);
       if (error instanceof HttpException) {
-        throw error
+        throw error;
       }
       throw new InternalServerErrorException('Failed to create supplier.');
     }
@@ -74,6 +74,27 @@ export class SupplierService {
     } catch (error) {
       console.error('Fetch Supplier Error:', error);
       throw new InternalServerErrorException('Failed to fetch suppliers.');
+    }
+  }
+
+  async getDropDownSupplier(): Promise<{
+    data: { supplier_id: number; supplier_name: string }[];
+    count: number;
+  }> {
+    try {
+      const [suppliers, count] = await this.supplierRepository.findAndCount({
+        select: ['supplier_id', 'supplier_name'],
+      });
+
+      return {
+        data: suppliers,
+        count,
+      };
+    } catch (error) {
+      console.error('Fetch Dropdown Supplier Error:', error);
+      throw new InternalServerErrorException(
+        'Failed to fetch suppliers for dropdown.',
+      );
     }
   }
 

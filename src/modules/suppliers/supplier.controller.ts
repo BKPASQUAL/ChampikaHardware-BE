@@ -8,6 +8,7 @@ import {
   Param,
   Put,
   Delete,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { SupplierService } from './supplier.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -41,6 +42,25 @@ export class SupplierController {
       data,
       count,
     };
+  }
+
+  // Get All Suppliers
+  @Get('dropdown')
+  @HttpCode(HttpStatus.OK)
+  async getDropDownData(): Promise<any> {
+    try {
+      const { data, count } = await this.supplierService.getDropDownSupplier();
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Suppliers fetched successfully',
+        data,
+        count,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to fetch suppliers for dropdown.',
+      );
+    }
   }
   // Get Supplier by ID
   @Get(':id')
