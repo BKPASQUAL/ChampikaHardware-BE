@@ -24,20 +24,39 @@ export class ItemService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
+  private async generateItemCode(supplierName: string): Promise<string> {
+    // Get first two letters of supplier name and convert to uppercase
+    const prefix = supplierName.substring(0, 2).toUpperCase();
+
+    // Find the highest existing item code with this prefix
+    const existingItems = await this.itemRepository
+      .createQueryBuilder('item')
+      .where('item.item_code LIKE :prefix', { prefix: `${prefix}%` })
+      .orderBy('item.item_code', 'DESC')
+      .getMany();
+
+    let nextNumber = 1;
+
+    if (existingItems.length > 0) {
+      // Extract the number part from the latest item code
+      const latestCode = existingItems[0].item_code;
+      const numberPart = latestCode.substring(2); // Remove prefix
+      const latestNumber = parseInt(numberPart, 10);
+
+      if (!isNaN(latestNumber)) {
+        nextNumber = latestNumber + 1;
+      }
+    }
+
+    // Format number with leading zeros (3 digits)
+    const formattedNumber = nextNumber.toString().padStart(3, '0');
+
+    return `${prefix}${formattedNumber}`;
+  }
+
   async createItem(dto: CreateItemDto): Promise<ItemResponseDto> {
     try {
-      // Check if item already exists by name or code
-      const existingItem = await this.itemRepository.findOne({
-        where: [{ item_name: dto.item_name }, { item_code: dto.item_code }],
-      });
-
-      if (existingItem) {
-        throw new ConflictException(
-          'Item already exists with the same name or code',
-        );
-      }
-
-      // Validate supplier exists
+      // Validate supplier exists first
       const supplier = await this.supplierRepository.findOne({
         where: { supplier_id: dto.supplier_id },
       });
@@ -46,6 +65,20 @@ export class ItemService {
         throw new NotFoundException(
           `Supplier with ID ${dto.supplier_id} not found`,
         );
+      }
+
+      // Generate item code based on supplier name
+      const generatedItemCode = await this.generateItemCode(
+        supplier.supplier_name,
+      );
+
+      // Check if item already exists by name (remove item_code check since it's auto-generated)
+      const existingItem = await this.itemRepository.findOne({
+        where: { item_name: dto.item_name },
+      });
+
+      if (existingItem) {
+        throw new ConflictException('Item already exists with the same name');
       }
 
       // Validate category exists
@@ -59,9 +92,10 @@ export class ItemService {
         );
       }
 
-      // Create new item
+      // Create new item with auto-generated code
       const newItem = this.itemRepository.create({
         ...dto,
+        item_code: generatedItemCode, // Use auto-generated code
         item_uuid: uuidv4(),
         supplier,
         category,
@@ -77,7 +111,7 @@ export class ItemService {
         description: savedItem.description,
         cost_price: savedItem.cost_price,
         selling_price: savedItem.selling_price,
-        unit_type: savedItem.unit_type, // 👈 THIS caused the error
+        unit_type: savedItem.unit_type,
         supplier_name: supplier.supplier_name,
         category_name: category.category_name,
       };
