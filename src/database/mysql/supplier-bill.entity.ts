@@ -4,13 +4,15 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Supplier } from './supplier.enitity';
-import { Item } from './item.entity';
+
 import { v4 as uuidv4 } from 'uuid';
+import { Supplier } from './supplier.enitity';
+import { SupplierBillItem } from './supplier-bill-item.entity';
 
 @Entity('supplier_bills')
 export class SupplierBill {
@@ -24,21 +26,32 @@ export class SupplierBill {
   @JoinColumn({ name: 'supplier_id' })
   supplier: Supplier;
 
-  @ManyToOne(() => Item)
-  @JoinColumn({ name: 'item_id' })
-  item: Item;
+  @Column({ type: 'varchar', length: 50, unique: true })
+  bill_number: string;
+
+  @Column({ type: 'date' })
+  billing_date: Date;
+
+  @Column({ type: 'date' })
+  received_date: Date;
+
+  // One bill can have many items
+  @OneToMany(() => SupplierBillItem, (billItem) => billItem.supplierBill, {
+    cascade: true,
+  })
+  billItems: SupplierBillItem[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  total_amount: number;
+  subtotal: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  special_discount: number;
+  extra_discount_percentage: number;
 
-  @Column({ type: 'int' })
-  quantity: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  discount_amount: number;
 
-  @Column({ type: 'int', default: 0 })
-  free_item_count: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  final_total: number;
 
   @CreateDateColumn()
   created_at: Date;

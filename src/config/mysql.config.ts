@@ -5,6 +5,7 @@ import { Category } from 'src/database/mysql/category.entity';
 import { Item } from 'src/database/mysql/item.entity';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
 import { Stock } from 'src/database/mysql/stocks.entity';
+import { SupplierBillItem } from 'src/database/mysql/supplier-bill-item.entity';
 import { SupplierBill } from 'src/database/mysql/supplier-bill.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 
@@ -25,6 +26,7 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     Stock,
     StockLocation,
     SupplierBill,
+    SupplierBillItem,
   ],
   synchronize: process.env.ENVIRONMENT !== 'prod',
 };
