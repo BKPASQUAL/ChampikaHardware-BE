@@ -5,6 +5,7 @@ import { SupplierModule } from './modules/suppliers/supplier.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ItemModule } from './modules/items/item.module';
 import { StockLocationModule } from './modules/location/stockLocation.module';
+import { SupplierBillModule } from './modules/supplierBill/supplier-bill.module';
 
 @Module({
   imports: [
@@ -12,7 +13,8 @@ import { StockLocationModule } from './modules/location/stockLocation.module';
     SupplierModule,
     CategoryModule,
     ItemModule,
-    StockLocationModule
+    StockLocationModule,
+    SupplierBillModule,
   ],
   controllers: [],
   providers: [],
