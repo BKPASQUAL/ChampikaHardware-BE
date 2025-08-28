@@ -5,6 +5,7 @@ export class ItemResponseDto {
   item_name: string;
   description?: string;
   additional_notes?: string;
+  mrp: number;
   cost_price: number;
   selling_price: number;
   rep_commision?: number;

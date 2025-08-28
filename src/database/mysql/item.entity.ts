@@ -35,6 +35,9 @@ export class Item {
   cost_price: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
+  mrp: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   selling_price: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })

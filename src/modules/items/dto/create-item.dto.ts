@@ -36,6 +36,10 @@ export class CreateItemDto {
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsNotEmpty()
+  mrp: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsNotEmpty()
   selling_price: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
