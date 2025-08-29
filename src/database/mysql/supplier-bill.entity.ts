@@ -1,4 +1,3 @@
-// supplier-bill.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -13,6 +12,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Supplier } from './supplier.enitity';
 import { SupplierBillItem } from './supplier-bill-item.entity';
+import { StockLocation } from './stock_location.entity';
 
 @Entity('supplier_bills')
 export class SupplierBill {
@@ -25,6 +25,10 @@ export class SupplierBill {
   @ManyToOne(() => Supplier)
   @JoinColumn({ name: 'supplier_id' })
   supplier: Supplier;
+
+  @ManyToOne(() => StockLocation, { nullable: false }) // ✅ each bill belongs to one location
+  @JoinColumn({ name: 'location_id' })
+  location: StockLocation;
 
   @Column({ type: 'varchar', length: 50, unique: true })
   bill_number: string;

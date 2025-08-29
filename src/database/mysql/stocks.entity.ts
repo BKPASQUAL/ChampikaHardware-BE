@@ -22,9 +22,6 @@ export class Stock {
   @JoinColumn({ name: 'item_id' })
   item: Item;
 
-  @Column()
-  location_id: number;
-
   @ManyToOne(() => StockLocation)
   @JoinColumn({ name: 'location_id' })
   location: StockLocation;

@@ -1,29 +1,45 @@
-// stock-location.entity.ts
 import {
+  Column,
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
+import { User } from './user.entity';
+import { Business } from './business.entity';
+import { UserLocationAccess } from './user_location_access.entity';
 
-@Entity('stock_location')
+@Entity('location')
 export class StockLocation {
   @PrimaryGeneratedColumn()
   location_id: number;
 
-  @Column({ type: 'varchar', length: 36 })
-  location_uuid: string;
-
-  @Column({ type: 'boolean', default: false })
-  main: boolean;
+  @Column({ type: 'varchar', length: 50 })
+  location_code: string;
 
   @Column({ type: 'varchar', length: 100 })
   location_name: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @ManyToOne(() => Business, (business) => business.business_id, {
+    nullable: false,
+  })
+  @JoinColumn({ name: 'business_id' })
+  business: Business;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'responsible_user_id' })
+  responsibleUser: User;
+
+  @ManyToOne(() => StockLocation, (location) => location.subLocations, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'parent_location_id' })
+  parentLocation: StockLocation;
+
+  @OneToMany(() => StockLocation, (location) => location.parentLocation)
+  subLocations: StockLocation[];
+
+  @OneToMany(() => UserLocationAccess, (ula) => ula.location)
+  userAccess: UserLocationAccess[];
 }
