@@ -42,4 +42,6 @@ export class CreateSupplierBillDto {
 
   @IsNumber()
   finalTotal: number;
+
+  
 }

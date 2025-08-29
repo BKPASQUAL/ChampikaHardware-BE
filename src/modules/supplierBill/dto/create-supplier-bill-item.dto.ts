@@ -26,4 +26,12 @@ export class SupplierBillItemDto {
   @IsNumber()
   @IsOptional()
   freeItemQuantity?: number;
+
+  @IsOptional()
+  @IsNumber()
+  mrp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  sellingPrice?: number;
 }

@@ -59,8 +59,9 @@ export class SupplierBillService {
       final_total: createSupplierBillDto.finalTotal,
     });
 
-    // Create bill items first
+    // Create bill items and update item prices
     const billItems: SupplierBillItem[] = [];
+    const itemsToUpdate: Item[] = [];
 
     for (const itemDto of createSupplierBillDto.items) {
       const item = items.find((i) => i.item_code === itemDto.itemCode);
@@ -81,15 +82,68 @@ export class SupplierBillService {
       });
 
       billItems.push(billItem);
+
+      // Update item prices based on supplier bill data
+      let itemUpdated = false;
+
+      // Update cost price (unit price from supplier bill becomes cost price)
+      if (itemDto.price && item.cost_price !== itemDto.price) {
+        item.cost_price = itemDto.price;
+        itemUpdated = true;
+      }
+
+      // Update MRP if provided in the DTO
+      if (itemDto.mrp && item.mrp !== itemDto.mrp) {
+        item.mrp = itemDto.mrp;
+        itemUpdated = true;
+      }
+
+      // Update selling price if provided in the DTO
+      if (itemDto.sellingPrice && item.selling_price !== itemDto.sellingPrice) {
+        item.selling_price = itemDto.sellingPrice;
+        itemUpdated = true;
+      }
+
+      // Auto-calculate selling price if not provided (cost price + margin)
+      // You can adjust this logic based on your business requirements
+      if (!itemDto.sellingPrice && itemDto.price) {
+        const marginPercentage = 20; // 20% margin - adjust as needed
+        const calculatedSellingPrice =
+          itemDto.price * (1 + marginPercentage / 100);
+
+        if (item.selling_price !== calculatedSellingPrice) {
+          item.selling_price = calculatedSellingPrice;
+          itemUpdated = true;
+        }
+      }
+
+      // Update last purchase date and supplier
+      // item.last_purchase_date = new Date();
+      // item.last_supplier_id = supplier.supplier_id;
+      // itemUpdated = true;
+
+      if (itemUpdated) {
+        itemsToUpdate.push(item);
+      }
     }
 
     // Assign bill items to the bill
     supplierBill.billItems = billItems;
 
-    // Save the complete bill with items (cascade should save items too)
-    const savedBill = await this.supplierBillRepository.save(supplierBill);
+    // Use transaction to ensure data consistency
+    return await this.supplierBillRepository.manager.transaction(
+      async (manager) => {
+        // Save the complete bill with items
+        const savedBill = await manager.save(SupplierBill, supplierBill);
 
-    return savedBill;
+        // Update all modified items
+        if (itemsToUpdate.length > 0) {
+          await manager.save(Item, itemsToUpdate);
+        }
+
+        return savedBill;
+      },
+    );
   }
 
   async findAll(): Promise<SupplierBill[]> {
@@ -98,11 +152,9 @@ export class SupplierBillService {
     });
   }
 
-  // Note: This method might need the correct primary key field name from your entity
-  // Replace 'id' with the actual field name (e.g., 'bill_id', 'supplier_bill_id', etc.)
   async findOne(id: number): Promise<SupplierBill> {
     const bill = await this.supplierBillRepository.findOne({
-      where: { id: id } as any, // Temporary fix - replace with actual field name
+      where: { id: id } as any, // Replace with actual field name
       relations: ['supplier', 'billItems', 'billItems.item'],
     });
 
@@ -111,5 +163,37 @@ export class SupplierBillService {
     }
 
     return bill;
+  }
+
+  // Helper method to update item prices separately if needed
+  async updateItemPrices(
+    itemCode: string,
+    priceUpdates: {
+      costPrice?: number;
+      mrp?: number;
+      sellingPrice?: number;
+    },
+  ): Promise<Item> {
+    const item = await this.itemRepository.findOne({
+      where: { item_code: itemCode },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Item not found');
+    }
+
+    if (priceUpdates.costPrice !== undefined) {
+      item.cost_price = priceUpdates.costPrice;
+    }
+
+    if (priceUpdates.mrp !== undefined) {
+      item.mrp = priceUpdates.mrp;
+    }
+
+    if (priceUpdates.sellingPrice !== undefined) {
+      item.selling_price = priceUpdates.sellingPrice;
+    }
+
+    return await this.itemRepository.save(item);
   }
 }
