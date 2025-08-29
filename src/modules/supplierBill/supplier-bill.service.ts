@@ -7,6 +7,7 @@ import { SupplierBill } from 'src/database/mysql/supplier-bill.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { Repository } from 'typeorm';
 import { CreateSupplierBillDto } from './dto/create-supplier-bill.dto';
+import { StockLocation } from 'src/database/mysql/stock_location.entity';
 
 @Injectable()
 export class SupplierBillService {
@@ -22,6 +23,9 @@ export class SupplierBillService {
 
     @InjectRepository(Item)
     private itemRepository: Repository<Item>,
+
+    @InjectRepository(StockLocation)
+    private locationRepository: Repository<StockLocation>, // Better naming
   ) {}
 
   async create(
@@ -34,6 +38,14 @@ export class SupplierBillService {
 
     if (!supplier) {
       throw new NotFoundException('Supplier not found');
+    }
+
+    const location = await this.locationRepository.findOne({
+      where: { location_id: createSupplierBillDto.location_id }, // No parseInt needed
+    });
+
+    if (!location) {
+      throw new NotFoundException('Location not found');
     }
 
     // Get items by item code (since frontend uses item codes, not database IDs)
@@ -49,6 +61,7 @@ export class SupplierBillService {
     // Create the main bill
     const supplierBill = this.supplierBillRepository.create({
       supplier,
+      location,
       bill_number: createSupplierBillDto.billNo,
       billing_date: new Date(createSupplierBillDto.billingDate),
       received_date: new Date(createSupplierBillDto.receivedDate),

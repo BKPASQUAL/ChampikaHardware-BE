@@ -8,6 +8,7 @@ import { SupplierBill } from 'src/database/mysql/supplier-bill.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { SupplierBillItem } from 'src/database/mysql/supplier-bill-item.entity';
 import { Item } from 'src/database/mysql/item.entity';
+import { StockLocation } from 'src/database/mysql/stock_location.entity';
 
 @Module({
   imports: [
@@ -15,8 +16,9 @@ import { Item } from 'src/database/mysql/item.entity';
       SupplierBill,
       SupplierBillItem,
       Supplier,
-      Item
-    ])
+      Item,
+      StockLocation,
+    ]),
   ],
   controllers: [SupplierBillController],
   providers: [SupplierBillService],

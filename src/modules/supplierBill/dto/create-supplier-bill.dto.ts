@@ -43,5 +43,6 @@ export class CreateSupplierBillDto {
   @IsNumber()
   finalTotal: number;
 
-  
+  @IsNumber()
+  location_id: number;
 }
