@@ -23,4 +23,15 @@ export class BusinessService {
     const business = this.businessRepository.create(dto);
     return await this.businessRepository.save(business);
   }
+
+  async getAllBusiness(): Promise<{ data: Business[] }> {
+    try {
+      const businesses = await this.businessRepository.find();
+      return {
+        data: businesses,
+      };
+    } catch (error) {
+      throw new Error('Failed to fetch businesses: ' + error.message);
+    }
+  }
 }

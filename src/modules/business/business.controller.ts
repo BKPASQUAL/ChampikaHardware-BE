@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UsePipes,
   ValidationPipe,
@@ -18,5 +19,11 @@ export class BusinessController {
   @UsePipes(new ValidationPipe({ whitelist: true })) // validates DTO
   async createBusiness(@Body() dto: CreateBusinessDto): Promise<Business> {
     return await this.businessService.createBusiness(dto);
+  }
+
+  // GET /business
+  @Get()
+  async getAllBusiness(): Promise<{ data: Business[] }> {
+    return await this.businessService.getAllBusiness();
   }
 }
