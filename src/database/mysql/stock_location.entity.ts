@@ -23,23 +23,30 @@ export class StockLocation {
 
   @ManyToOne(() => Business, (business) => business.business_id, {
     nullable: false,
+    onDelete: 'CASCADE', // ✅ delete locations if business is deleted
   })
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'responsible_user_id' })
   responsibleUser: User;
 
   @ManyToOne(() => StockLocation, (location) => location.subLocations, {
     nullable: true,
+    onDelete: 'CASCADE', // ✅ delete child locations if parent is deleted
   })
   @JoinColumn({ name: 'parent_location_id' })
   parentLocation: StockLocation;
 
-  @OneToMany(() => StockLocation, (location) => location.parentLocation)
+  @OneToMany(() => StockLocation, (location) => location.parentLocation, {
+    cascade: true,
+  })
   subLocations: StockLocation[];
 
-  @OneToMany(() => UserLocationAccess, (ula) => ula.location)
+  @OneToMany(() => UserLocationAccess, (ula) => ula.location, {
+    cascade: true,
+    onDelete: 'CASCADE', // ✅ delete user access when location is deleted
+  })
   userAccess: UserLocationAccess[];
 }
