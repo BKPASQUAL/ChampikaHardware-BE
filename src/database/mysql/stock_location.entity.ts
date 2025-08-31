@@ -32,6 +32,9 @@ export class StockLocation {
   @JoinColumn({ name: 'responsible_user_id' })
   responsibleUser: User;
 
+  @Column({ type: 'boolean', default: false }) // ✅ new field
+  main: boolean;
+
   @ManyToOne(() => StockLocation, (location) => location.subLocations, {
     nullable: true,
     onDelete: 'CASCADE', // ✅ delete child locations if parent is deleted
