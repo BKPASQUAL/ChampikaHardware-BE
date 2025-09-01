@@ -13,4 +13,4 @@ import { Supplier } from 'src/database/mysql/supplier.enitity';
   providers: [ItemService],
   exports: [ItemService],
 })
-export class ItemModule {}
+export class ItemModule {} 
