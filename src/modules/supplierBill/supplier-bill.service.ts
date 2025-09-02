@@ -8,6 +8,7 @@ import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { Repository } from 'typeorm';
 import { CreateSupplierBillDto } from './dto/create-supplier-bill.dto';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
+import { Stock } from 'src/database/mysql/stocks.entity';
 
 @Injectable()
 export class SupplierBillService {
@@ -25,7 +26,10 @@ export class SupplierBillService {
     private itemRepository: Repository<Item>,
 
     @InjectRepository(StockLocation)
-    private locationRepository: Repository<StockLocation>, // Better naming
+    private locationRepository: Repository<StockLocation>,
+
+    @InjectRepository(Stock) // Add Stock repository
+    private stockRepository: Repository<Stock>,
   ) {}
 
   async create(
@@ -41,7 +45,7 @@ export class SupplierBillService {
     }
 
     const location = await this.locationRepository.findOne({
-      where: { location_id: createSupplierBillDto.location_id }, // No parseInt needed
+      where: { location_id: createSupplierBillDto.location_id },
     });
 
     if (!location) {
@@ -72,9 +76,14 @@ export class SupplierBillService {
       final_total: createSupplierBillDto.finalTotal,
     });
 
-    // Create bill items and update item prices
+    // Create bill items and prepare stock updates
     const billItems: SupplierBillItem[] = [];
     const itemsToUpdate: Item[] = [];
+    const stockUpdates: {
+      item: Item;
+      quantityToAdd: number;
+      freeQuantityToAdd: number;
+    }[] = [];
 
     for (const itemDto of createSupplierBillDto.items) {
       const item = items.find((i) => i.item_code === itemDto.itemCode);
@@ -95,6 +104,13 @@ export class SupplierBillService {
       });
 
       billItems.push(billItem);
+
+      // Prepare stock update data
+      stockUpdates.push({
+        item,
+        quantityToAdd: itemDto.quantity,
+        freeQuantityToAdd: itemDto.freeItemQuantity || 0,
+      });
 
       // Update item prices based on supplier bill data
       let itemUpdated = false;
@@ -118,7 +134,6 @@ export class SupplierBillService {
       }
 
       // Auto-calculate selling price if not provided (cost price + margin)
-      // You can adjust this logic based on your business requirements
       if (!itemDto.sellingPrice && itemDto.price) {
         const marginPercentage = 20; // 20% margin - adjust as needed
         const calculatedSellingPrice =
@@ -129,11 +144,6 @@ export class SupplierBillService {
           itemUpdated = true;
         }
       }
-
-      // Update last purchase date and supplier
-      // item.last_purchase_date = new Date();
-      // item.last_supplier_id = supplier.supplier_id;
-      // itemUpdated = true;
 
       if (itemUpdated) {
         itemsToUpdate.push(item);
@@ -154,21 +164,67 @@ export class SupplierBillService {
           await manager.save(Item, itemsToUpdate);
         }
 
+        // Update stock quantities
+        await this.updateStockQuantities(manager, stockUpdates, location);
+
         return savedBill;
       },
     );
   }
 
+  // Helper method to update stock quantities
+  private async updateStockQuantities(
+    manager: any,
+    stockUpdates: {
+      item: Item;
+      quantityToAdd: number;
+      freeQuantityToAdd: number;
+    }[],
+    location: StockLocation,
+  ): Promise<void> {
+    for (const stockUpdate of stockUpdates) {
+      const { item, quantityToAdd, freeQuantityToAdd } = stockUpdate;
+      const totalQuantityToAdd = quantityToAdd + freeQuantityToAdd;
+
+      if (totalQuantityToAdd <= 0) {
+        continue; // Skip if no quantity to add
+      }
+
+      // Check if stock record exists for this item and location
+      let existingStock = await manager.findOne(Stock, {
+        where: {
+          item_id: item.item_id,
+          location: { location_id: location.location_id },
+        },
+      });
+
+      if (existingStock) {
+        // Update existing stock
+        existingStock.quantity += totalQuantityToAdd;
+        await manager.save(Stock, existingStock);
+      } else {
+        // Create new stock record
+        const newStock = manager.create(Stock, {
+          item_id: item.item_id,
+          item: item,
+          location: location,
+          quantity: totalQuantityToAdd,
+        });
+        await manager.save(Stock, newStock);
+      }
+    }
+  }
+
   async findAll(): Promise<SupplierBill[]> {
     return this.supplierBillRepository.find({
-      relations: ['supplier', 'billItems', 'billItems.item'],
+      relations: ['supplier', 'billItems', 'billItems.item', 'location'],
     });
   }
 
   async findOne(id: number): Promise<SupplierBill> {
     const bill = await this.supplierBillRepository.findOne({
-      where: { id: id } as any, // Replace with actual field name
-      relations: ['supplier', 'billItems', 'billItems.item'],
+      where: { id: id } as any,
+      relations: ['supplier', 'billItems', 'billItems.item', 'location'],
     });
 
     if (!bill) {
@@ -176,6 +232,26 @@ export class SupplierBillService {
     }
 
     return bill;
+  }
+
+  // Helper method to get stock levels for an item at a specific location
+  async getStockLevel(itemId: number, locationId: number): Promise<number> {
+    const stock = await this.stockRepository.findOne({
+      where: {
+        item_id: itemId,
+        location: { location_id: locationId },
+      },
+    });
+
+    return stock ? stock.quantity : 0;
+  }
+
+  // Helper method to get all stock levels for an item across all locations
+  async getItemStockLevels(itemId: number): Promise<Stock[]> {
+    return this.stockRepository.find({
+      where: { item_id: itemId },
+      relations: ['location'],
+    });
   }
 
   // Helper method to update item prices separately if needed

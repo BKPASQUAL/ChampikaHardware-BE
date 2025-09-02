@@ -9,6 +9,7 @@ import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { SupplierBillItem } from 'src/database/mysql/supplier-bill-item.entity';
 import { Item } from 'src/database/mysql/item.entity';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
+import { Stock } from 'src/database/mysql/stocks.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { StockLocation } from 'src/database/mysql/stock_location.entity';
       Supplier,
       Item,
       StockLocation,
+      Stock
     ]),
   ],
   controllers: [SupplierBillController],
