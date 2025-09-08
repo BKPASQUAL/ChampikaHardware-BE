@@ -5,6 +5,8 @@ import { Business } from 'src/database/mysql/business.entity';
 import { Category } from 'src/database/mysql/category.entity';
 import { Item } from 'src/database/mysql/item.entity';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
+import { StockTransferItem } from 'src/database/mysql/stock_transfer_items.entity';
+import { StockTransfer } from 'src/database/mysql/stock_transfers.entity';
 import { Stock } from 'src/database/mysql/stocks.entity';
 import { SupplierBillItem } from 'src/database/mysql/supplier-bill-item.entity';
 import { SupplierBill } from 'src/database/mysql/supplier-bill.entity';
@@ -33,6 +35,8 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     UserLocationAccess,
     Business,
     StockLocation,
+    StockTransferItem,
+    StockTransfer,
   ],
   synchronize: process.env.ENVIRONMENT !== 'prod',
 };
