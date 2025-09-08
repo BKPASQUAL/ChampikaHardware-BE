@@ -1,62 +1,49 @@
-// import { Injectable, NotFoundException } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Stock } from 'src/database/mysql/stocks.entity';
-// import { Repository } from 'typeorm';
-// import { AddStockDto } from './dto/add-stock.dto';
-// import { Item } from 'src/database/mysql/item.entity';
-// import { StockLocation } from 'src/database/mysql/stock_location.entity';
+// stock.service.ts
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Stock } from 'src/database/mysql/stocks.entity';
+import { Repository } from 'typeorm';
 
-// @Injectable()
-// export class StockService {
-//   constructor(
-//     @InjectRepository(Stock)
-//     private readonly stockRepository: Repository<Stock>,
+@Injectable()
+export class StockService {
+  constructor(
+    @InjectRepository(Stock)
+    private readonly stockRepository: Repository<Stock>,
+  ) {}
 
-//     @InjectRepository(Item)
-//     private readonly itemRepository: Repository<Item>,
-
-//     @InjectRepository(StockLocation)
-//     private readonly locationRepository: Repository<StockLocation>,
-//   ) {}
-
-//  async addItemStock(dto: AddStockDto): Promise<Stock> {
-//   const item = await this.itemRepository.findOne({
-//     where: { item_id: dto.item_id },
-//   });
-//   const location = await this.locationRepository.findOne({
-//     where: { location_id: dto.location_id },
-//   });
-
-//   if (!item) {
-//     throw new NotFoundException('Item not found');
-//   }
-
-//   if (!location) {
-//     throw new NotFoundException('Stock location not found');
-//   }
-
-//   // ✅ Use primitive foreign key fields in `where` clause
-//   let stock = await this.stockRepository.findOne({
-//     where: {
-//       item_id: dto.item_id,
-//       location_id: dto.location_id,
-//     },
-//   });
-
-//   if (stock) {
-//     // ✅ Update existing quantity
-//     stock.quantity += dto.quantity;
-//   } else {
-//     // ✅ Create new stock with full entity references
-//     stock = this.stockRepository.create({
-//       item_id: dto.item_id,
-//       location_id: dto.location_id,
-//       quantity: dto.quantity,
-//     });
-//   }
-
-//   return await this.stockRepository.save(stock);
-// }
-
-
-// }
+  async getAllStocks() {
+    try {
+      return await this.stockRepository.find({
+        relations: {
+          item: { supplier: true },
+          location: true,
+        },
+        select: {
+          stock_id: true,
+          quantity: true,
+          updated_at: true,
+          item: {
+            item_code: true,
+            item_name: true,
+            supplier: {
+              supplier_id: true,
+              supplier_name: true,
+            },
+          },
+          location: {
+            location_id: true,
+            location_code: true,
+            location_name: true,
+          },
+        },
+        order: {
+          updated_at: 'DESC',
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Database query failed: ${error.message}`,
+      );
+    }
+  }
+}

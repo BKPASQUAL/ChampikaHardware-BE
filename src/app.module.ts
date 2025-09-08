@@ -7,6 +7,7 @@ import { ItemModule } from './modules/items/item.module';
 import { StockLocationModule } from './modules/location/stockLocation.module';
 import { SupplierBillModule } from './modules/supplierBill/supplier-bill.module';
 import { BusinessModule } from './modules/business/business.module';
+import { StockModule } from './modules/stock/stock.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { BusinessModule } from './modules/business/business.module';
     StockLocationModule,
     SupplierBillModule,
     BusinessModule,
+    StockModule,
   ],
   controllers: [],
   providers: [],
