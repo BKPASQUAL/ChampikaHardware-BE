@@ -90,6 +90,18 @@ export class StockLocationService {
     });
   }
 
+  // ✅ Get all stock locations with only ID and name (for dropdowns/select lists)
+  async findAllSimple(): Promise<
+    { location_id: number; location_name: string }[]
+  > {
+    const locations = await this.stockLocationRepository.find({
+      select: ['location_id', 'location_name'],
+      order: { location_name: 'ASC' }, // Optional: sort by name
+    });
+
+    return locations;
+  }
+
   // ✅ Get main location for a specific business
   async findMainLocationByBusiness(
     businessId: number,

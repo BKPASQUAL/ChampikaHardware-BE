@@ -43,6 +43,16 @@ export class StockLocationController {
     };
   }
 
+  // ✅ NEW: Get all locations with only ID and name
+  @Get('dropdown')
+  async findAllSimple(): Promise<any> {
+    const locations = await this.stockLocationService.findAllSimple();
+    return {
+      statusCode: HttpStatus.OK,
+      data: locations,
+    };
+  }
+
   // ✅ Get all main locations
   @Get('main')
   async findAllMainLocations(): Promise<any> {
@@ -58,9 +68,8 @@ export class StockLocationController {
   async findMainLocationByBusiness(
     @Param('businessId', ParseIntPipe) businessId: number,
   ): Promise<any> {
-    const location = await this.stockLocationService.findMainLocationByBusiness(
-      businessId,
-    );
+    const location =
+      await this.stockLocationService.findMainLocationByBusiness(businessId);
     return {
       statusCode: HttpStatus.OK,
       data: location,
