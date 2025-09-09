@@ -48,8 +48,6 @@ export class StockTransferItem {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   total_cost: number; // requested_quantity * unit_cost
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
 
   @CreateDateColumn()
   created_at: Date;

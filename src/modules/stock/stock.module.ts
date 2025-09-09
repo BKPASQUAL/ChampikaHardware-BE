@@ -7,6 +7,8 @@ import { Stock } from 'src/database/mysql/stocks.entity';
 import { Item } from 'src/database/mysql/item.entity';
 import { Supplier } from 'src/database/mysql/supplier.enitity';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
+import { StockTransfer } from 'src/database/mysql/stock_transfers.entity';
+import { StockTransferItem } from 'src/database/mysql/stock_transfer_items.entity';
 
 @Module({
   imports: [
@@ -14,11 +16,13 @@ import { StockLocation } from 'src/database/mysql/stock_location.entity';
       Stock,
       Item,
       StockLocation,
-      Supplier
-    ])
+      Supplier,
+      StockTransfer,
+      StockTransferItem,
+    ]),
   ],
   controllers: [StockController],
   providers: [StockService],
-  exports: [StockService]
+  exports: [StockService],
 })
 export class StockModule {}

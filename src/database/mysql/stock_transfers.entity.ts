@@ -52,9 +52,6 @@ export class StockTransfer {
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
-
   @CreateDateColumn()
   created_at: Date;
 
