@@ -8,6 +8,7 @@ import { StockLocationModule } from './modules/location/stockLocation.module';
 import { SupplierBillModule } from './modules/supplierBill/supplier-bill.module';
 import { BusinessModule } from './modules/business/business.module';
 import { StockModule } from './modules/stock/stock.module';
+import { CustomerModule } from './modules/customer/customer.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { StockModule } from './modules/stock/stock.module';
     SupplierBillModule,
     BusinessModule,
     StockModule,
+    CustomerModule,
   ],
   controllers: [],
   providers: [],
