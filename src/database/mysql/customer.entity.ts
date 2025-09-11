@@ -36,13 +36,12 @@ export class Customer {
   })
   customerType: CustomerType;
 
-  // Foreign Key to Area
-  @Column({ type: 'int' })
-  areaId: number;
+  @Column({ type: 'int', nullable: true })
+  areaId: number | null;
 
-  @ManyToOne(() => Area, area => area.customers)
+  @ManyToOne(() => Area, (area) => area.customers, { nullable: true })
   @JoinColumn({ name: 'areaId', referencedColumnName: 'area_id' })
-  area: Area;
+  area: Area | null;
 
   @Column({ type: 'text' })
   address: string;
@@ -51,12 +50,12 @@ export class Customer {
   contactNumber: string;
 
   // Foreign Key to User (Assigned Rep)
-  @Column({ type: 'int' })
-  assignedRepId: number;
+  @Column({ type: 'int', nullable: true })
+  assignedRepId: number | null;
 
-  @ManyToOne(() => User, user => user.assignedCustomers)
+  @ManyToOne(() => User, (user) => user.assignedCustomers, { nullable: true })
   @JoinColumn({ name: 'assignedRepId', referencedColumnName: 'user_id' })
-  assignedRep: User;
+  assignedRep: User | null;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

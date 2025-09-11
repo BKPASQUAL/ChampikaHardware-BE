@@ -43,7 +43,7 @@ export class CreateCustomerDto {
   // contactNumber: string;
 
   @IsInt()
-  @IsNotEmpty()
+  @IsOptional()
   assignedRepId: number;
 
   @IsString()
