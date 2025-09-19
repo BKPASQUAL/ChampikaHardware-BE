@@ -9,6 +9,7 @@ import { SupplierBillModule } from './modules/supplierBill/supplier-bill.module'
 import { BusinessModule } from './modules/business/business.module';
 import { StockModule } from './modules/stock/stock.module';
 import { CustomerModule } from './modules/customer/customer.module';
+import { CustomerBillModule } from './modules/customerBill/customerBill.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CustomerModule } from './modules/customer/customer.module';
     BusinessModule,
     StockModule,
     CustomerModule,
+    CustomerBillModule,
   ],
   controllers: [],
   providers: [],

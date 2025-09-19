@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { Area } from 'src/database/mysql/area.entity';
 import { Business } from 'src/database/mysql/business.entity';
 import { Category } from 'src/database/mysql/category.entity';
+import { CustomerBill, CustomerBillItem } from 'src/database/mysql/customer-bill.entity';
 import { Customer } from 'src/database/mysql/customer.entity';
 import { Item } from 'src/database/mysql/item.entity';
 import { StockLocation } from 'src/database/mysql/stock_location.entity';
@@ -38,7 +39,9 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     StockLocation,
     StockTransferItem,
     StockTransfer,
-    Customer
+    Customer,
+    CustomerBill,
+    CustomerBillItem
   ],
   synchronize: process.env.ENVIRONMENT !== 'prod',
 };
