@@ -87,15 +87,16 @@ export class CustomerBill {
   notes?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reference_no: string;
+  reference_no: string | null;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by' })
   created_by: User;
 
-  @ManyToOne(() => StockLocation, { nullable: true })
-  @JoinColumn({ name: 'location_id' })
-  location: StockLocation;
+@ManyToOne(() => StockLocation, { nullable: true })
+@JoinColumn({ name: 'location_id' })
+location: StockLocation | null;
+
 
   @CreateDateColumn()
   created_at: Date;

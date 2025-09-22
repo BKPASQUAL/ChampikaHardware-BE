@@ -1,3 +1,4 @@
+// src/modules/customerBill/customerBill.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -10,6 +11,7 @@ import { StockLocation } from 'src/database/mysql/stock_location.entity';
 import { Stock } from 'src/database/mysql/stocks.entity';
 import { CustomerBillController } from './customerBill.controller';
 import { CustomerBillService } from './customerBill.service';
+import { CustomerBillTransformService } from './customerBill-transform.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { CustomerBillService } from './customerBill.service';
     ]),
   ],
   controllers: [CustomerBillController],
-  providers: [CustomerBillService],
+  providers: [CustomerBillService, CustomerBillTransformService],
   exports: [CustomerBillService],
 })
 export class CustomerBillModule {}
