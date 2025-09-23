@@ -36,6 +36,27 @@ export class StockController {
     }
   }
 
+   @Get('dropdown')
+  async getStocksDropdown() {
+    try {
+      const stocksDropdown = await this.stockService.getStocksDropdown();
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Stocks dropdown retrieved successfully',
+        data: stocksDropdown,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Failed to retrieve stocks dropdown',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // ✅ Create stock transfer
   @Post('transfers')
   async createStockTransfer(

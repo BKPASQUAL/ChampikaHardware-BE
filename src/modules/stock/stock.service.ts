@@ -214,4 +214,64 @@ export class StockService {
 
     return `ST-${dateStr}-${String(count + 1).padStart(3, '0')}`;
   }
+
+  async getStocksDropdown() {
+    try {
+      const stocks = await this.stockRepository
+        .createQueryBuilder('stock')
+        .leftJoinAndSelect('stock.item', 'item')
+        .leftJoinAndSelect('item.supplier', 'supplier')
+        .leftJoinAndSelect('stock.location', 'location')
+        .select([
+          'item.item_id AS item_id',
+          'item.item_code AS item_code',
+          'item.item_name AS item_name',
+          'item.cost_price AS unit_price', // or selling_price if you prefer
+          'item.selling_price AS selling_price',
+          'item.mrp AS mrp',
+          'supplier.supplier_name AS supplier_name',
+          'SUM(stock.quantity) AS total_stock',
+          'COUNT(DISTINCT location.location_id) AS location_count',
+          'GROUP_CONCAT(DISTINCT CONCAT(location.location_name, ":", stock.quantity)) AS location_details',
+        ])
+        .where('stock.quantity > 0') // Only show items with stock
+        .groupBy('item.item_id')
+        .addGroupBy('item.item_code')
+        .addGroupBy('item.item_name')
+        .addGroupBy('item.cost_price')
+        .addGroupBy('item.selling_price')
+        .addGroupBy('item.mrp')
+        .addGroupBy('supplier.supplier_name')
+        .orderBy('item.item_name', 'ASC')
+        .getRawMany();
+
+      // Transform the results to include parsed location details
+      const transformedStocks = stocks.map((stock) => ({
+        item_id: stock.item_id,
+        item_code: stock.item_code,
+        item_name: stock.item_name,
+        unit_price: parseFloat(stock.unit_price || 0),
+        selling_price: parseFloat(stock.selling_price || 0),
+        mrp: parseFloat(stock.mrp || 0),
+        supplier_name: stock.supplier_name,
+        total_stock: parseInt(stock.total_stock || 0),
+        location_count: parseInt(stock.location_count || 0),
+        locations: stock.location_details
+          ? stock.location_details.split(',').map((detail) => {
+              const [location_name, quantity] = detail.split(':');
+              return {
+                location_name,
+                quantity: parseInt(quantity || 0),
+              };
+            })
+          : [],
+      }));
+
+      return transformedStocks;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to retrieve stocks dropdown: ${error.message}`,
+      );
+    }
+  }
 }
