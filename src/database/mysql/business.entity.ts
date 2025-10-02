@@ -1,5 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { BusinessType } from '../enums/business-type.enum';
+import { User } from './user.entity';
 
 @Entity('business')
 export class Business {
@@ -11,4 +12,7 @@ export class Business {
 
   @Column({ type: 'enum', enum: BusinessType })
   business_type: BusinessType;
+
+  @OneToMany(() => User, (user) => user.business)
+  users: User[];
 }
