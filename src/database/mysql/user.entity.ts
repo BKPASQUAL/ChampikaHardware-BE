@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import { 
+  Entity, 
+  PrimaryGeneratedColumn, 
+  Column, 
+  OneToMany, 
+  ManyToOne, 
+  CreateDateColumn, 
+  UpdateDateColumn 
+} from 'typeorm';
 import { Customer } from './customer.entity';
 import { Business } from './business.entity';
 import { UserRole } from '../enums/user-role.enum';
@@ -23,6 +31,14 @@ export class User {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
+  // Password field - should be hashed
+  @Column({ type: 'varchar', length: 255 })
+  password: string;
+
+  // Status field to enable/disable users
+  @Column({ type: 'boolean', default: true })
+  is_active: boolean;
+
   @ManyToOne(() => Business, (business) => business.users)
   business: Business;
 
@@ -31,4 +47,10 @@ export class User {
 
   @OneToMany(() => Customer, (customer) => customer.assignedRep)
   assignedCustomers: Customer[];
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }
