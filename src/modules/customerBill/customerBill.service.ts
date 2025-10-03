@@ -41,6 +41,34 @@ export class CustomerBillService {
   ) {}
 
   /**
+   * Transform user object to exclude sensitive fields
+   */
+  private sanitizeUser(user: User): Partial<User> {
+    const {
+      password,
+      is_active,
+      businessId,
+      created_at,
+      updated_at,
+      ...safeUser
+    } = user;
+    return safeUser;
+  }
+
+  /**
+   * Transform bill to sanitize user data
+   */
+  private sanitizeBill(bill: CustomerBill): CustomerBill {
+    if (bill.created_by) {
+      bill.created_by = this.sanitizeUser(bill.created_by) as User;
+    }
+    if (bill.confirmed_by) {
+      bill.confirmed_by = this.sanitizeUser(bill.confirmed_by) as User;
+    }
+    return bill;
+  }
+
+  /**
    * Generate unique invoice number
    */
   private async generateInvoiceNumber(
@@ -52,7 +80,6 @@ export class CustomerBillService {
 
     const prefix = isOrder ? 'ORD' : 'INV';
 
-    // Get the last invoice/order number for this month
     const lastInvoice = await this.customerBillRepository
       .createQueryBuilder('bill')
       .where('bill.invoice_no LIKE :pattern', {
@@ -111,7 +138,6 @@ export class CustomerBillService {
     await queryRunner.startTransaction();
 
     try {
-      // Get the user who is creating the bill
       const user = await this.userRepository.findOne({
         where: { user_id: userId },
       });
@@ -120,10 +146,8 @@ export class CustomerBillService {
         throw new NotFoundException('User not found');
       }
 
-      // Determine if this is an order based on user role
       const isOrder = user.role === UserRole.REPRESENTATIVE;
 
-      // Validate customer
       const customer = await this.customerRepository.findOne({
         where: { id: createDto.customer_id },
       });
@@ -131,7 +155,6 @@ export class CustomerBillService {
         throw new NotFoundException('Customer not found');
       }
 
-      // Validate location if provided
       let location: StockLocation | null = null;
       if (createDto.location_id) {
         const foundLocation = await this.locationRepository.findOne({
@@ -143,25 +166,19 @@ export class CustomerBillService {
         location = foundLocation;
       }
 
-      // Generate invoice/order number if not provided
       const invoiceNo =
         createDto.invoiceNo || (await this.generateInvoiceNumber(isOrder));
 
-      // Calculate totals
       let subtotal = 0;
       let totalItems = 0;
       let totalQuantity = 0;
 
-      // Prepare bill items
       const billItems: Partial<CustomerBillItem>[] = [];
 
       for (const itemDto of createDto.items) {
         const item = await this.findItemByCodeOrId(itemDto);
 
-        // For orders (representatives), we don't reduce stock immediately
-        // Stock will be reduced when the order is confirmed by admin/manager
         if (!isOrder && location) {
-          // Only check and reduce stock for direct bills (non-orders)
           const stock = await this.stockRepository.findOne({
             where: {
               item_id: item.item_id,
@@ -205,7 +222,6 @@ export class CustomerBillService {
         totalQuantity += itemDto.quantity;
       }
 
-      // Calculate bill totals
       const calculatedSubtotal = createDto.subtotal || subtotal;
       const extraDiscountPercent = createDto.extraDiscount || 0;
       const extraDiscountAmount =
@@ -214,17 +230,14 @@ export class CustomerBillService {
       const finalTotal =
         createDto.finalTotal || calculatedSubtotal - extraDiscountAmount;
 
-      // Set initial status and order-specific fields
       let initialStatus = createDto.status || BillStatus.DRAFT;
       let orderStatus: OrderStatus | null = null;
 
       if (isOrder) {
-        // For representatives, always create as PENDING order
         initialStatus = BillStatus.PENDING;
         orderStatus = OrderStatus.PENDING;
       }
 
-      // Create the customer bill
       const customerBill = new CustomerBill();
       customerBill.invoice_no = invoiceNo;
       customerBill.customer = customer;
@@ -252,7 +265,6 @@ export class CustomerBillService {
 
       const savedBill = await queryRunner.manager.save(customerBill);
 
-      // Create bill items
       for (const itemData of billItems) {
         const billItem = queryRunner.manager.create(CustomerBillItem, {
           ...itemData,
@@ -261,7 +273,6 @@ export class CustomerBillService {
         await queryRunner.manager.save(CustomerBillItem, billItem);
       }
 
-      // Only update stock for direct bills (not orders)
       if (!isOrder && location) {
         for (const itemDto of createDto.items) {
           const item = await this.findItemByCodeOrId(itemDto);
@@ -280,7 +291,6 @@ export class CustomerBillService {
 
       await queryRunner.commitTransaction();
 
-      // Return the saved bill with relations - FIX: Handle null case
       const result = await this.customerBillRepository.findOne({
         where: { bill_id: savedBill.bill_id },
         relations: ['customer', 'items', 'created_by', 'location'],
@@ -290,7 +300,7 @@ export class CustomerBillService {
         throw new NotFoundException('Failed to retrieve created customer bill');
       }
 
-      return result;
+      return this.sanitizeBill(result);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -308,7 +318,6 @@ export class CustomerBillService {
     await queryRunner.startTransaction();
 
     try {
-      // Get the user confirming the order
       const user = await this.userRepository.findOne({
         where: { user_id: userId },
       });
@@ -317,14 +326,12 @@ export class CustomerBillService {
         throw new NotFoundException('User not found');
       }
 
-      // Only admin and manager can confirm orders
       if (![UserRole.ADMIN].includes(user.role)) {
         throw new BadRequestException(
           'Only admin or manager can confirm orders',
         );
       }
 
-      // Get the bill
       const bill = await this.customerBillRepository.findOne({
         where: { bill_id: billId },
         relations: ['items', 'location'],
@@ -342,7 +349,6 @@ export class CustomerBillService {
         throw new BadRequestException('Order is not in pending status');
       }
 
-      // Check and reduce stock
       if (bill.location) {
         for (const item of bill.items) {
           const stock = await this.stockRepository.findOne({
@@ -358,7 +364,6 @@ export class CustomerBillService {
             );
           }
 
-          // Reduce stock
           await queryRunner.manager.decrement(
             Stock,
             {
@@ -371,7 +376,6 @@ export class CustomerBillService {
         }
       }
 
-      // Update bill status
       bill.order_status = OrderStatus.CONFIRMED;
       bill.order_confirmed_at = new Date();
       bill.confirmed_by = user;
@@ -381,7 +385,6 @@ export class CustomerBillService {
 
       await queryRunner.commitTransaction();
 
-      // Return updated bill - FIX: Handle null case
       const updatedBill = await this.customerBillRepository.findOne({
         where: { bill_id: billId },
         relations: [
@@ -397,7 +400,7 @@ export class CustomerBillService {
         throw new NotFoundException('Failed to retrieve updated bill');
       }
 
-      return updatedBill;
+      return this.sanitizeBill(updatedBill);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -423,7 +426,8 @@ export class CustomerBillService {
       queryBuilder.andWhere('bill.order_status = :status', { status });
     }
 
-    return await queryBuilder.getMany();
+    const bills = await queryBuilder.getMany();
+    return bills.map((bill) => this.sanitizeBill(bill));
   }
 
   /**
@@ -438,6 +442,7 @@ export class CustomerBillService {
       .leftJoinAndSelect('bill.customer', 'customer')
       .leftJoinAndSelect('bill.items', 'items')
       .leftJoinAndSelect('bill.location', 'location')
+      .leftJoinAndSelect('bill.created_by', 'created_by')
       .where('bill.is_order = :isOrder', { isOrder: true })
       .andWhere('bill.created_by = :userId', { userId })
       .orderBy('bill.created_at', 'DESC');
@@ -446,6 +451,7 @@ export class CustomerBillService {
       queryBuilder.andWhere('bill.order_status = :status', { status });
     }
 
-    return await queryBuilder.getMany();
+    const bills = await queryBuilder.getMany();
+    return bills.map((bill) => this.sanitizeBill(bill));
   }
 }
