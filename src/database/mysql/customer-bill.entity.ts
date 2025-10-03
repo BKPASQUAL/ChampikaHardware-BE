@@ -27,6 +27,15 @@ export enum BillStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum OrderStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  PROCESSING = 'processing',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
+}
+
 @Entity('customer_bills')
 export class CustomerBill {
   @PrimaryGeneratedColumn()
@@ -55,6 +64,21 @@ export class CustomerBill {
     default: BillStatus.DRAFT,
   })
   status: BillStatus;
+
+  // NEW: Order management fields
+  @Column({ type: 'boolean', default: false })
+  is_order: boolean; // Flag to identify if this is an order (created by representative)
+
+  @Column({ type: 'enum', enum: OrderStatus, nullable: true })
+  order_status?: OrderStatus | null;
+  // Order status (only used if is_order = true)
+
+  @Column({ type: 'datetime', nullable: true })
+  order_confirmed_at?: Date | null;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'confirmed_by' })
+  confirmed_by?: User | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   subtotal: number;
@@ -93,10 +117,9 @@ export class CustomerBill {
   @JoinColumn({ name: 'created_by' })
   created_by: User;
 
-@ManyToOne(() => StockLocation, { nullable: true })
-@JoinColumn({ name: 'location_id' })
-location: StockLocation | null;
-
+  @ManyToOne(() => StockLocation, { nullable: true })
+  @JoinColumn({ name: 'location_id' })
+  location: StockLocation | null;
 
   @CreateDateColumn()
   created_at: Date;
