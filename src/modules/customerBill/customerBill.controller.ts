@@ -145,4 +145,19 @@ export class CustomerBillController {
       // data: bill,
     };
   }
+
+  /**
+   * Get a single order by ID
+   * GET /customer-bills/orders/:id
+   */
+  @Get('orders/:id')
+  @Roles(UserRole.ADMIN, UserRole.REPRESENTATIVE)
+  async getOrderById(@Param('id', ParseIntPipe) id: number) {
+    const order = await this.customerBillService.findOrderById(id);
+
+    return {
+      success: true,
+      data: order,
+    };
+  }
 }

@@ -454,4 +454,39 @@ export class CustomerBillService {
     const bills = await queryBuilder.getMany();
     return bills.map((bill) => this.sanitizeBill(bill));
   }
+
+  /**
+   * Find a single bill/order by ID
+   */
+  async findById(billId: number): Promise<CustomerBill> {
+    const bill = await this.customerBillRepository.findOne({
+      where: { bill_id: billId },
+      relations: [
+        'customer',
+        'items',
+        'created_by',
+        'confirmed_by',
+        'location',
+      ],
+    });
+
+    if (!bill) {
+      throw new NotFoundException(`Bill with ID ${billId} not found`);
+    }
+
+    return this.sanitizeBill(bill);
+  }
+
+  /**
+   * Find order by ID (wrapper with order validation)
+   */
+  async findOrderById(billId: number): Promise<CustomerBill> {
+    const bill = await this.findById(billId);
+
+    if (!bill.is_order) {
+      throw new BadRequestException('This is not an order');
+    }
+
+    return bill;
+  }
 }
