@@ -92,6 +92,24 @@ export class CustomerBillController {
     };
   }
 
+  @Post(':id/checking')
+  @Roles(UserRole.ADMIN, UserRole.OFFICE) // Allows Admin and Office roles
+  async moveToChecking(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    const result = await this.customerBillService.moveToChecking(
+      id,
+      user.user_id,
+    );
+
+    return {
+      success: true,
+      message: 'Order status updated to Checking',
+      data: result,
+    };
+  }
+
   /**
    * Get all orders (Admin/Manager)
    * GET /customer-bills/orders

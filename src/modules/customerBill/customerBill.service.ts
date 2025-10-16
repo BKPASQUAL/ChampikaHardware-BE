@@ -572,4 +572,79 @@ export class CustomerBillService {
       customerSummary,
     };
   }
+
+  /**
+   * Move confirmed order to checking status (Admin/Office only)
+   */
+  async moveToChecking(billId: number, userId: number): Promise<CustomerBill> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { user_id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Allow ADMIN or OFFICE role to move to checking
+      if (![UserRole.ADMIN, UserRole.OFFICE].includes(user.role)) {
+        throw new BadRequestException(
+          'Only admin or office staff can move orders to checking status',
+        );
+      }
+
+      const bill = await this.customerBillRepository.findOne({
+        where: { bill_id: billId },
+        relations: ['items', 'location'],
+      });
+
+      if (!bill) {
+        throw new NotFoundException('Bill not found');
+      }
+
+      if (!bill.is_order) {
+        throw new BadRequestException('This is not an order');
+      }
+
+      // Check if the current status is CONFIRMED
+      if (bill.order_status !== OrderStatus.CONFIRMED) {
+        throw new BadRequestException(
+          `Order is not in confirmed status. Current status: ${bill.order_status}`,
+        );
+      }
+
+      // Update status to CHECKING
+      bill.order_status = OrderStatus.CHECKING;
+
+      await queryRunner.manager.save(CustomerBill, bill);
+
+      await queryRunner.commitTransaction();
+
+      const updatedBill = await this.customerBillRepository.findOne({
+        where: { bill_id: billId },
+        relations: [
+          'customer',
+          'items',
+          'created_by',
+          'confirmed_by',
+          'location',
+        ],
+      });
+
+      if (!updatedBill) {
+        throw new NotFoundException('Failed to retrieve updated bill');
+      }
+
+      return this.sanitizeBill(updatedBill);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
