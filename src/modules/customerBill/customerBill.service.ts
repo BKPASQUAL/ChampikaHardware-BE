@@ -1,3 +1,4 @@
+// src/modules/customerBill/customerBill.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -19,6 +20,7 @@ import { StockLocation } from '../../database/mysql/stock_location.entity';
 import { User } from '../../database/mysql/user.entity';
 import { UserRole } from '../../database/enums/user-role.enum';
 import { CreateCustomerBillDto } from './dto/customer-bill.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class CustomerBillService {
@@ -39,6 +41,63 @@ export class CustomerBillService {
     private userRepository: Repository<User>,
     private dataSource: DataSource,
   ) {}
+
+  /**
+   * Helper method to calculate delivered orders summary for a given customer, excluding a specific bill.
+   */
+  private async getCustomerDeliveredSummary(
+    customerId: number,
+    excludeBillId?: number,
+  ): Promise<any> {
+    const today = dayjs();
+    const fortyFiveDaysAgo = today.subtract(45, 'day').toDate();
+    const fortyFiveDaysAgoStr = fortyFiveDaysAgo.toISOString().split('T')[0];
+
+    let query = this.customerBillRepository
+      .createQueryBuilder('bill')
+      .where('bill.customer_id = :customerId', { customerId })
+      .andWhere('bill.order_status = :orderStatus', {
+        orderStatus: OrderStatus.DELIVERED,
+      })
+      .andWhere('bill.status NOT IN (:...paidStatuses)', {
+        paidStatuses: [BillStatus.PAID, BillStatus.CANCELLED],
+      });
+
+    if (excludeBillId) {
+      query = query.andWhere('bill.bill_id != :excludeBillId', {
+        excludeBillId,
+      });
+    }
+
+    const customerBills = await query
+      .orderBy('bill.billing_date', 'DESC')
+      .getMany();
+
+    const pendingBills = customerBills.filter(
+      (bill) => bill.balance_amount > 0,
+    );
+
+    const dueAmount = pendingBills.reduce(
+      (sum, bill) => sum + Number(bill.balance_amount),
+      0,
+    );
+
+    const over45DaysAmount = pendingBills
+      .filter((bill) => dayjs(bill.billing_date).isBefore(fortyFiveDaysAgoStr))
+      .reduce((sum, bill) => sum + Number(bill.balance_amount), 0);
+
+    const lastBillingDate =
+      customerBills.length > 0
+        ? dayjs(customerBills[0].billing_date).format('MMM DD, YYYY')
+        : 'N/A';
+
+    return {
+      dueAmount: parseFloat(dueAmount.toFixed(2)),
+      pendingBillsCount: pendingBills.length,
+      over45DaysAmount: parseFloat(over45DaysAmount.toFixed(2)),
+      lastBillingDate,
+    };
+  }
 
   /**
    * Transform user object to exclude sensitive fields
@@ -478,15 +537,39 @@ export class CustomerBillService {
   }
 
   /**
-   * Find order by ID (wrapper with order validation)
+   * Find order by ID (wrapper with order validation and customer summary)
    */
-  async findOrderById(billId: number): Promise<CustomerBill> {
-    const bill = await this.findById(billId);
+  async findOrderById(billId: number): Promise<any> {
+    const bill = await this.customerBillRepository.findOne({
+      where: { bill_id: billId },
+      relations: [
+        'customer',
+        'items',
+        'created_by',
+        'confirmed_by',
+        'location',
+      ],
+    });
+
+    if (!bill) {
+      throw new NotFoundException(`Bill with ID ${billId} not found`);
+    }
 
     if (!bill.is_order) {
       throw new BadRequestException('This is not an order');
     }
 
-    return bill;
+    // Get summary for the customer associated with this order
+    const customerSummary = await this.getCustomerDeliveredSummary(
+      bill.customer.id,
+      billId, // Pass the current bill ID to be excluded
+    );
+
+    // Combine order details and customer summary
+    const sanitizedBill = this.sanitizeBill(bill);
+    return {
+      ...sanitizedBill,
+      customerSummary,
+    };
   }
 }
